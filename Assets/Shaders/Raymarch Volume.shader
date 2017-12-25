@@ -92,7 +92,7 @@ Shader "MAG/Raymarch Volume"
 				float frequency = TAU * 5;
 				float speed = _Time.y * 5;
 				float amplitude = PI / (2.0 * frequency);
-				float sne = amplitude * sin(frequency * p.x);
+				float sne = amplitude * sin(frequency * p.x + speed);
 
 				s = opIntersection(s, sne);
 
