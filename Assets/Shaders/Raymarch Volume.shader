@@ -27,7 +27,9 @@ Shader "MAG/Raymarch Volume"
 			#include "Libraries/SDFShapes.cginc" 
 
 			#define MAX_STEPS 128
-			#define MIN_DISTANCE 0.0005
+			#define MIN_DISTANCE 0.0007
+			#define TAU 6.28318530718
+			#define PI 3.14159265359
 
 			fixed4 _SurfaceColor;
 			fixed4 _InsideColor;
@@ -78,6 +80,7 @@ Shader "MAG/Raymarch Volume"
 				const float eps = 0.001;
 				float s;
 
+				//float o  = sphereSDF(p, float3(0.0, 0.0, 0.0), 0.5);
 				float o  = sphereSDF(p, float3(0.0, 0.0, -0.2), 0.4);
 				float h1 = sphereSDF(p, float3(-0.3, 0.0, 0.1), 0.3);
 				float h2 = sphereSDF(p, float3(0.3, 0.0, 0.1), 0.3);
@@ -86,9 +89,10 @@ Shader "MAG/Raymarch Volume"
 				s = opUnion(s, h1);
 				s = opUnion(s, h2);
 
-				float freq =  50;
+				float frequency = TAU * 5;
 				float speed = _Time.y * 5;
-				float sne = sin(p.x * freq + speed) * 0.04;
+				float amplitude = PI / (2.0 * frequency);
+				float sne = amplitude * sin(frequency * p.x);
 
 				s = opIntersection(s, sne);
 
@@ -112,7 +116,7 @@ Shader "MAG/Raymarch Volume"
 				{
 					return _InsideColor;
 				}
-				else if (sdfSample < 0.0000001)
+				else if (sdfSample < 0)
 				{
 					return _SkinInnerColor;
 				}
@@ -134,7 +138,11 @@ Shader "MAG/Raymarch Volume"
 					{
 						return renderSurface(position, sdfSample);
 					}
-					position += direction * sdfSample;
+
+					// The end value is to cut back the ray marching a bit to not accidentally go
+					// into a surface prematurely. Value is arbitrary/trial-and-error. Must be
+					// a value between 0 (no propagation) and 1 (full propagation).
+					position += direction * sdfSample * 0.6;
 				}
 				return fixed4(0, 0, 0, 0);
 			}
